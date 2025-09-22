@@ -2,10 +2,19 @@
 	import { browser } from '$app/environment';
 	import Header from './Header.svelte';
 
+	// Import our services and utilities
+	import { TodoService } from '$lib/services/todoService.js';
+	import { StorageService } from '$lib/services/storageService.js';
+	import {
+		getPriorityColor,
+		getPriorityEmoji,
+		sortTodosByPriorityAndCompletion,
+		filterTodos
+	} from '$lib/utils/todoHelpers.js';
+
 	// Clear localStorage if needed for testing
 	// if (browser) {
-	// 	localStorage.removeItem('svelte-todos');
-	// 	localStorage.removeItem('svelte-nextId');
+	// 	StorageService.clearTodos();
 	// 	console.log('localStorage cleared!');
 	// }
 
@@ -13,7 +22,7 @@
 
 	//todo variables
 	// interface
-	// Todo { id: number; title: string; description: string; dueDate: string; priority: 'low'|'medium'|'high'; completed: boolean; }
+	// Todo { id: string; title: string; description: string; dueDate: string; priority: 'low'|'medium'|'high'; completed: boolean; }
 	let todos = $state([]);
 	let newTodo = $state({
 		title: '',
@@ -22,78 +31,45 @@
 		priority: 'medium'
 	});
 	let editingTodo = $state(null);
-	let nextId = $state(1);
 	let isInitialized = $state(false);
 
-	let sortedbyPriorityandCompletionTodos = $derived.by(() => {
-		const priorityOrder = { high: 3, medium: 2, low: 1 };
-		return [...todos].sort((a, b) => {
-			if (a.completed !== b.completed) {
-				return a.completed - b.completed;
-			}
-			return priorityOrder[b.priority] - priorityOrder[a.priority];
-		});
+	// Derived reactive values using our helper functions
+	let sortedTodos = $derived.by(() => {
+		return sortTodosByPriorityAndCompletion(todos);
 	});
 
-	let incompleteCount = $derived.by(() => {
-		return todos.filter((todo) => !todo.completed).length;
+	let filteredTodos = $derived.by(() => {
+		return filterTodos(sortedTodos, searchQuery);
 	});
 
-	let completedCount = $derived.by(() => {
-		return todos.filter((todo) => todo.completed).length;
-	});
-
-	let totalCount = $derived.by(() => {
-		return todos.length;
+	let stats = $derived.by(() => {
+		return TodoService.getStats(todos);
 	});
 
 	//to load from local storage on initial render
 	$effect(() => {
 		if (browser && !isInitialized) {
-			const savedTodos = localStorage.getItem('svelte-todos');
-			const savedNextId = localStorage.getItem('svelte-nextId');
-
-			if (savedTodos) {
-				todos = JSON.parse(savedTodos);
-			}
-
-			if (savedNextId) {
-				nextId = parseInt(savedNextId);
-			}
-
+			todos = StorageService.loadTodos();
 			isInitialized = true;
 		}
 	});
 
-	//to save to local storage when todos or nextId changes
+	//to save to local storage when todos changes
 	$effect(() => {
 		if (browser && isInitialized) {
-			localStorage.setItem('svelte-todos', JSON.stringify(todos));
-			localStorage.setItem('svelte-nextId', nextId.toString());
+			StorageService.saveTodos(todos);
 		}
 	});
 
-	let filteredTodos = $derived.by(() => {
-		if (!searchQuery.trim()) return sortedbyPriorityandCompletionTodos;
-		return sortedbyPriorityandCompletionTodos.filter(
-			(todo) =>
-				todo.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				todo.description.toLowerCase().includes(searchQuery.toLowerCase())
-		);
-	});
-
 	//todo functions
-
 	function addTodo() {
 		try {
-			if (newTodo.title.trim() === '') {
-				alert('Title is required');
-				return;
-			}
-			todos = [...todos, { id: nextId, ...newTodo, completed: false }];
-			nextId += 1;
+			const newTodoItem = TodoService.createTodo(newTodo);
+			todos = [...todos, newTodoItem];
+			// Reset form
 			newTodo = { title: '', description: '', dueDate: '', priority: 'medium' };
 		} catch (error) {
+			alert(error.message);
 			console.error('Error adding todo:', error);
 		}
 	}
@@ -108,13 +84,10 @@
 
 	function saveEdit() {
 		try {
-			if (!editingTodo || editingTodo.title.trim() === '') {
-				alert('Title is required');
-				return;
-			}
-			todos = todos.map((todo) => (todo.id === editingTodo.id ? editingTodo : todo));
+			todos = TodoService.updateTodo(todos, editingTodo.id, editingTodo);
 			editingTodo = null;
 		} catch (error) {
+			alert(error.message);
 			console.error('Error saving edit:', error);
 		}
 	}
@@ -123,43 +96,34 @@
 		editingTodo = null;
 	}
 
-	function toggleComplete(id) {
+	function toggleComplete(id, event) {
 		try {
-			todos = todos.map((todo) =>
-				todo.id === id ? { ...todo, completed: !todo.completed } : todo
-			);
+			// Stop event propagation to prevent conflicts
+			if (event) {
+				event.stopPropagation();
+			}
+			todos = TodoService.toggleCompletion(todos, id);
 		} catch (error) {
 			console.error('Error toggling completion:', error);
 		}
 	}
 
-	function deleteTodo(id) {
+	function deleteTodo(id, event) {
 		try {
-			if (id === undefined) {
-				throw new Error('Invalid todo id for deletion');
+			// Stop event propagation and confirm deletion
+			if (event) {
+				event.stopPropagation();
 			}
-			todos = todos.filter((todo) => todo.id !== id);
+
+			// Add confirmation for better UX
+			const todo = todos.find((t) => t.id === id);
+			if (todo && confirm(`Are you sure you want to delete "${todo.title}"?`)) {
+				todos = TodoService.deleteTodo(todos, id);
+			}
 		} catch (error) {
+			alert(error.message);
 			console.error('Error deleting todo:', error);
 		}
-	}
-
-	function getPriorityColor(priority) {
-		const colors = {
-			high: 'border-red-300 bg-red-50',
-			medium: 'border-yellow-300 bg-yellow-50',
-			low: 'border-green-300 bg-green-50'
-		};
-		return colors[priority] || colors.medium;
-	}
-
-	function getPriorityEmoji(priority) {
-		const emojis = {
-			high: '🔥',
-			medium: '⚡',
-			low: '🌱'
-		};
-		return emojis[priority] || emojis.medium;
 	}
 </script>
 
@@ -170,7 +134,7 @@
 </svelte:head>
 
 <div>
-	<Header {incompleteCount} {completedCount} {isInitialized} />
+	<Header incompleteCount={stats.incomplete} completedCount={stats.completed} {isInitialized} />
 
 	<div class="p-4">
 		<div class="max-w-6xl mx-auto space-y-4 sm:space-y-6">
@@ -282,13 +246,13 @@
 							<h2 class="text-lg sm:text-xl font-bold text-gray-800">Your Tasks</h2>
 							<div class="flex items-center gap-4 text-sm text-gray-600">
 								<span class="bg-purple-100 px-2 py-1 rounded-full">
-									{totalCount} Total
+									{stats.total} Total
 								</span>
 								<span class="bg-yellow-100 px-2 py-1 rounded-full">
-									{incompleteCount} Pending
+									{stats.incomplete} Pending
 								</span>
 								<span class="bg-green-100 px-2 py-1 rounded-full">
-									{completedCount} Done
+									{stats.completed} Done
 								</span>
 							</div>
 						</div>
@@ -321,13 +285,14 @@
 							</div>
 						{:else}
 							<div class="space-y-3">
-								{#each searchQuery.trim() ? filteredTodos : sortedbyPriorityandCompletionTodos as todo (todo.id)}
+								{#each filteredTodos as todo (todo.id)}
 									<div
-										class="border-2 rounded-lg p-3 sm:p-4 transition-all hover:shadow-md w-full {getPriorityColor(
+										class="border-2 rounded-lg p-3 sm:p-4 transition-all hover:shadow-md w-full cursor-pointer {getPriorityColor(
 											todo.priority
 										)} {todo.completed ? 'opacity-60' : ''}"
 										role="button"
 										tabindex="0"
+										title="Click '{todo.title}' to mark as complete"
 										onclick={() => toggleComplete(todo.id)}
 										onkeydown={(e) => {
 											if (e.key === 'Enter' || e.key === ' ') {
@@ -400,9 +365,10 @@
 													checked={todo.completed}
 													onchange={(e) => {
 														e.stopPropagation();
-														toggleComplete(todo.id);
+														toggleComplete(todo.id, e);
 													}}
-													class="mt-1 w-4 h-4 text-purple-600 focus:ring-purple-500"
+													class="mt-1 w-5 h-5 text-purple-600 focus:ring-purple-500 rounded"
+													title={todo.completed ? 'Mark as incomplete' : 'Mark as complete'}
 												/>
 												<div class="flex-1 min-w-0">
 													<div
@@ -446,10 +412,7 @@
 																Edit
 															</button>
 															<button
-																onclick={(e) => {
-																	e.stopPropagation();
-																	deleteTodo(todo.id);
-																}}
+																onclick={(e) => deleteTodo(todo.id, e)}
 																class="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
 																title="Delete task"
 															>

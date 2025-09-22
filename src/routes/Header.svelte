@@ -1,4 +1,7 @@
 <script>
+	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
+
 	let { incompleteCount = 0, completedCount = 0, isInitialized = false } = $props();
 </script>
 
