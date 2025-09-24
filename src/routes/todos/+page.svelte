@@ -77,16 +77,20 @@
 	}
 
 	// gets priority color classes based on priority level
+	// high priority is red
+	// medium priority is yellow
+	 // low priority is green
+	  // default gray
 	function getPriorityClass(priority) {
 		switch (priority) {
 			case 'high':
-				return 'bg-red-100 text-red-800 border-red-200'; // high priority is red
+				return 'bg-red-100 text-red-800 border-red-200'; 
 			case 'medium':
-				return 'bg-yellow-100 text-yellow-800 border-yellow-200'; // medium priority is yellow
+				return 'bg-yellow-100 text-yellow-800 border-yellow-200'; 
 			case 'low':
-				return 'bg-green-100 text-green-800 border-green-200'; // low priority is green
+				return 'bg-green-100 text-green-800 border-green-200';
 			default:
-				return 'bg-gray-100 text-gray-800 border-gray-200'; // default gray
+				return 'bg-gray-100 text-gray-800 border-gray-200';
 		}
 	}
 
@@ -94,13 +98,13 @@
 	function getPrioritySelectClass(priority) {
 		switch (priority) {
 			case 'high':
-				return 'text-red-600 bg-red-50'; // red text and background
+				return 'text-red-600 bg-red-50'; 
 			case 'medium':
-				return 'text-yellow-600 bg-yellow-50'; // yellow text and background
+				return 'text-yellow-600 bg-yellow-50'; 
 			case 'low':
-				return 'text-green-600 bg-green-50'; // green text and background
+				return 'text-green-600 bg-green-50'; 
 			default:
-				return 'text-gray-600 bg-gray-50'; // default gray
+				return 'text-gray-600 bg-gray-50';
 		}
 	}
 

@@ -1,17 +1,13 @@
 <script>
-<<<<<<< Updated upstream
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 
-	let { incompleteCount = 0, completedCount = 0, isInitialized = false } = $props();
-=======
 	let {
 		isLoggedIn = false,
 		userInfo = null,
 		incompleteCount = 0,
 		completedCount = 0
 	} = $props();
->>>>>>> Stashed changes
 </script>
 
 <header class="bg-white/95 backdrop-blur-sm shadow-lg border-b border-white/20">

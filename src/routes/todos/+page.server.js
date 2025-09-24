@@ -1,5 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { generateShortId } from '$lib/utils/idGenerator.js';
+import { generateShortId } from '../../lib/utils/idGenerator.js';
 import { validateTodo } from '$lib/utils/todoHelpers.js';
 
 // Load function to get todos for the logged-in user

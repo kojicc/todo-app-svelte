@@ -1,8 +1,4 @@
-<<<<<<< Updated upstream
 // kumuha ng color classes para sa priority styling
-=======
-﻿// kumuha ng color classes para sa priority styling
->>>>>>> Stashed changes
 export function getPriorityColor(priority) {
 	const colors = {
 		high: 'border-red-300 bg-red-50',

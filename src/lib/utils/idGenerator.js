@@ -1,8 +1,4 @@
-<<<<<<< Updated upstream
 // gumawa ng full UUID v4 identifier
-=======
-﻿// gumawa ng full UUID v4 identifier
->>>>>>> Stashed changes
 export function generateId() {
 	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
 		const r = (Math.random() * 16) | 0;
