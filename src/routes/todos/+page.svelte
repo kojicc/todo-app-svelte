@@ -79,14 +79,14 @@
 	// gets priority color classes based on priority level
 	// high priority is red
 	// medium priority is yellow
-	 // low priority is green
-	  // default gray
+	// low priority is green
+	// default gray
 	function getPriorityClass(priority) {
 		switch (priority) {
 			case 'high':
-				return 'bg-red-100 text-red-800 border-red-200'; 
+				return 'bg-red-100 text-red-800 border-red-200';
 			case 'medium':
-				return 'bg-yellow-100 text-yellow-800 border-yellow-200'; 
+				return 'bg-yellow-100 text-yellow-800 border-yellow-200';
 			case 'low':
 				return 'bg-green-100 text-green-800 border-green-200';
 			default:
@@ -98,11 +98,11 @@
 	function getPrioritySelectClass(priority) {
 		switch (priority) {
 			case 'high':
-				return 'text-red-600 bg-red-50'; 
+				return 'text-red-600 bg-red-50';
 			case 'medium':
-				return 'text-yellow-600 bg-yellow-50'; 
+				return 'text-yellow-600 bg-yellow-50';
 			case 'low':
-				return 'text-green-600 bg-green-50'; 
+				return 'text-green-600 bg-green-50';
 			default:
 				return 'text-gray-600 bg-gray-50';
 		}
@@ -137,7 +137,7 @@
 </svelte:head>
 
 <div class="min-h-screen bg-[url('src/lib/images/bg.jpg')] bg-cover bg-center bg-fixed">
-	<div class="min-h-screen bg-blue-500/70 backdrop-blur-sm">
+	<div class="min-h-screen bg-blue-400/70 backdrop-blur-sm">
 		<!-- navigation bar at the top -->
 		<header class="bg-white/95 backdrop-blur-sm shadow-lg border-b border-white/20">
 			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -172,6 +172,12 @@
 								Change Account
 							</button>
 						</form>
+						<a href="/"
+							class="bg-blue-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
+							aria-label="Go to home page"
+						>
+							Home
+						</a>
 					</div>
 				</div>
 			</div>
@@ -335,6 +341,7 @@
 									>Due Date</label
 								>
 								<input
+									required
 									type="date"
 									id="dueDate"
 									name="dueDate"

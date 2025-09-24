@@ -10,6 +10,19 @@
 	let password = $state('');
 	let isLoading = $state(false);
 
+	// handles login form submission with loading states
+	function handleLogin({ formData, cancel }) {
+		isLoading = true;
+
+		return async ({ result, update }) => {
+			isLoading = false;
+			if (result.type === 'redirect') {
+				goto(result.location);
+			}
+			await update();
+		};
+	}
+
 	// check if already logged in
 	$effect(() => {
 		if (browser) {
@@ -39,6 +52,15 @@
 	<div
 		class="bg-white/95 backdrop-blur-sm p-6 sm:p-8 rounded-xl shadow-2xl max-w-md w-full border border-white/20"
 	>
+		<div class="flex justify-end mb-4">
+			<a
+				href="/"
+				class="bg-blue-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
+				aria-label="Go to home page"
+			>
+				← Go to Home Page
+			</a>
+		</div>
 		<div class="text-center mb-6">
 			<img src="src/lib/images/logo.jpg" alt="Logo" class="mx-auto" />
 		</div>
@@ -62,7 +84,7 @@
 			</div>
 		{/if}
 
-		<form method="POST" class="space-y-4" action="?/login">
+		<form method="POST" class="space-y-4" action="?/login" use:enhance={handleLogin}>
 			<div>
 				<label for="username" class="block text-sm font-medium text-gray-700 mb-2">
 					Username
@@ -100,7 +122,7 @@
 			<button
 				type="submit"
 				disabled={isLoading}
-				class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+				class="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 				title="Click to login to your account"
 			>
 				{isLoading ? 'Signing in...' : 'Sign In'}
