@@ -309,5 +309,114 @@ export const actions = {
 		});
 
 		return { success: true };
+	},
+
+	// bulk toggle completion status for multiple todos
+	bulkToggleComplete: async ({ request, cookies }) => {
+		const isLoggedIn = cookies.get('isLoggedIn');
+		const userInfo = cookies.get('userInfo');
+
+		if (!isLoggedIn || isLoggedIn !== 'true' || !userInfo) {
+			throw redirect(302, '/login');
+		}
+
+		let user;
+		try {
+			user = JSON.parse(userInfo);
+		} catch (error) {
+			throw redirect(302, '/login');
+		}
+
+		const data = await request.formData();
+		const ids = data.getAll('ids');
+
+		if (!ids || ids.length === 0) {
+			return fail(400, { error: 'No todos selected' });
+		}
+
+		// get user's todos
+		const todosKey = `todos_${user.id}`;
+		const savedTodos = cookies.get(todosKey);
+		let todos = [];
+
+		if (savedTodos) {
+			try {
+				todos = JSON.parse(savedTodos);
+			} catch (error) {
+				return fail(500, { error: 'Failed to load todos' });
+			}
+		}
+
+		// toggle completion for selected todos
+		let updatedCount = 0;
+		todos = todos.map((todo) => {
+			if (ids.includes(todo.id)) {
+				updatedCount++;
+				return { ...todo, completed: !todo.completed };
+			}
+			return todo;
+		});
+
+		// save updated todos
+		cookies.set(todosKey, JSON.stringify(todos), {
+			path: '/',
+			maxAge: 60 * 60 * 24 * 30,
+			httpOnly: false,
+			secure: false
+		});
+
+		return { success: `Updated ${updatedCount} todo(s)` };
+	},
+
+	// bulk delete multiple todos
+	bulkDelete: async ({ request, cookies }) => {
+		const isLoggedIn = cookies.get('isLoggedIn');
+		const userInfo = cookies.get('userInfo');
+
+		if (!isLoggedIn || isLoggedIn !== 'true' || !userInfo) {
+			throw redirect(302, '/login');
+		}
+
+		let user;
+		try {
+			user = JSON.parse(userInfo);
+		} catch (error) {
+			throw redirect(302, '/login');
+		}
+
+		const data = await request.formData();
+		const ids = data.getAll('ids');
+
+		if (!ids || ids.length === 0) {
+			return fail(400, { error: 'No todos selected' });
+		}
+
+		// get user's todos
+		const todosKey = `todos_${user.id}`;
+		const savedTodos = cookies.get(todosKey);
+		let todos = [];
+
+		if (savedTodos) {
+			try {
+				todos = JSON.parse(savedTodos);
+			} catch (error) {
+				return fail(500, { error: 'Failed to load todos' });
+			}
+		}
+
+		// remove selected todos
+		const initialCount = todos.length;
+		todos = todos.filter((todo) => !ids.includes(todo.id));
+		const deletedCount = initialCount - todos.length;
+
+		// save updated todos
+		cookies.set(todosKey, JSON.stringify(todos), {
+			path: '/',
+			maxAge: 60 * 60 * 24 * 30,
+			httpOnly: false,
+			secure: false
+		});
+
+		return { success: `Deleted ${deletedCount} todo(s)` };
 	}
 };
